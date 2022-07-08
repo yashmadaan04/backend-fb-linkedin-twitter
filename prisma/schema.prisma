@@ -1,0 +1,348 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  ID                   Int             @id @unique @default(autoincrement())
+  UserTypeID           Int?
+  FirstName            String?         @db.VarChar(50)
+  LastName             String?         @db.VarChar(50)
+  Phone                String?         @db.VarChar(25)
+  Email                String          @db.VarChar(50)
+  PasswordHash         String?         @db.VarChar(500)
+  PasswordSalt         String?         @db.VarChar(500)
+  IsActive             Boolean
+  AuthenticationTypeID Int
+  CreatedOn            DateTime        @db.Timestamp()
+  UpdatedOn            DateTime?       @db.Timestamp()
+  UserType             UserType?       @relation(fields: [UserTypeID], references: [ID], onDelete: Cascade, onUpdate: Cascade)
+  PasswordReset        PasswordReset[]
+  UserLogin            UserLogin[]
+  LinkedAccount        LinkedAccount[]
+  UserPost             UserPost[]
+  PostReactions        PostReactions[]
+  PostComments         PostComments[]
+  PostToBeHiddenFrom   PostToBeHiddenFrom[]
+  PostReported         PostReported[]
+  CommentReactions     CommentReactions[]
+  CommentReported      CommentReported[]
+  UserFollowers        UserFollowers[]
+  UserConnection1      UserConnection[] @relation("User1")
+  UserConnection2      UserConnection[] @relation("User2")
+  UserProfileContact   UserProfileContact[]
+  UserProfileSettings  UserProfileSettings[]
+}
+
+model UserType {
+  ID   Int    @id @unique @default(autoincrement())
+  Name String @db.VarChar(50)
+  User User[]
+}
+
+model UserLogin {
+  ID                   Int                @id @unique @default(autoincrement())
+  UserID               Int
+  IPAddress            String?            @db.VarChar(20)
+  Token                String?            @db.VarChar(500)
+  HasCookiePolicy      Boolean?
+  KeepLoggedIn         Boolean?
+  IsEmailLogin         Boolean
+  AuthenticationTypeID Int
+  LoggedOn             DateTime           @db.Timestamp()
+  DeviceType           DeviceType?
+  User                 User               @relation(fields: [UserID], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+  AuthenticationType   AuthenticationType @relation(fields: [AuthenticationTypeID], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+}
+model UserConnection {
+  ID                   Int             @id @unique @default(autoincrement())
+  UserID1              Int
+  UserID2              Int
+  ConnectionDate       DateTime        @db.Timestamp()
+  RequestSentBy        Int
+  IsConnected          Boolean
+  User1                 User               @relation("User1",fields: [UserID1], references: [ID])
+  User2                 User               @relation("User2",fields: [UserID2], references: [ID])
+
+}
+model UserFollowers {
+  ID                   Int             @id @unique @default(autoincrement())
+  UserID               Int
+  FollwerUserID        Int  
+  User                 User            @relation(fields: [UserID], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+}
+model UserVerification {
+  ID                   Int             @id @unique @default(autoincrement())
+  UserID               Int
+  VerificationTypeId   Int
+  VerifiedOn           DateTime        @db.Timestamp()
+  VerifiedAgency       String          @db.VarChar(100)
+}
+model VerificationType {
+  ID                      Int          @id @unique @default(autoincrement())
+  VerificationType        String       @db.VarChar(100)
+  VerificationDescription String       @db.VarChar(500) 
+  BadgeName               String       @db.VarChar(50)         
+}
+model AuthenticationType {
+  ID                   Int             @id @unique @default(autoincrement())
+  ThirdPartyName       String          @db.VarChar(50)
+  ThirdPartyIcon       String          @db.VarChar(100)
+  ThirdPartyWebsiteUrl String          @db.VarChar(100)
+  OAuthURL             String          @db.VarChar(100)
+  IsEnabled            Boolean
+  CreatedBy            Int
+  UpdatedBy            Int
+  CreatedOn            DateTime        @db.Timestamp()
+  UpdatedOn            DateTime        @db.Timestamp()
+  UserLogin            UserLogin[]
+  LinkedAccount        LinkedAccount[]
+}
+model ProfilePrivacySettings {
+  ID                   Int             @id @unique @default(autoincrement())
+  SettingName          String
+  PrivacySettingValue  PrivacySettingValue[]
+  UserProfileSettings  UserProfileSettings[]
+}
+model PrivacySettingValue {
+  ID                   Int             @id @unique @default(autoincrement())
+  ProfilePrivacySettingsID            Int
+  SettingValue         String
+  SettingDescription   String
+  CreatedOn            DateTime        @db.Timestamp()
+  ProfilePrivacySettings ProfilePrivacySettings @relation(fields: [ProfilePrivacySettingsID], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+
+}
+model UserProfileSettings {
+  ID                   Int             @id @unique @default(autoincrement())
+  UserID               Int
+  ProfilePrivacySettingsID     Int
+  ProfileSettingValueID Int
+  CreatedOn            DateTime        @db.Timestamp()
+  User                 User            @relation(fields: [UserID], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+  ProfilePrivacySettings ProfilePrivacySettings @relation(fields: [ProfilePrivacySettingsID], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+
+}
+model Country {
+  ID                Int             @id @unique @default(autoincrement())
+  Name              String          @db.VarChar(50)
+  CountryCategoryID Int
+  CountryCategory   CountryCategory @relation(fields: [CountryCategoryID], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+  UserProfileContact UserProfileContact[]
+}
+
+model Package {
+  ID                          Int                           @id @unique @default(autoincrement())
+  Name                        String                        @db.VarChar(50)
+  Icon                        String                        @db.VarChar(100)
+  Description                 String                        @db.VarChar(500)
+  IsActive                    Boolean
+  CreatedBy                   Int
+  UpdatedBy                   Int
+  CreatedOn                   DateTime                      @db.Timestamp()
+  UpdatedOn                   DateTime                      @db.Timestamp()
+  CountryCategoryPackagePrice CountryCategoryPackagePrice[]
+  PackageFeature              PackageFeature[]
+}
+
+model CountryCategoryPackagePrice {
+  ID                Int               @id @unique @default(autoincrement())
+  Price             String            @db.VarChar(50)
+  PreviousPrice     String            @db.VarChar(50)
+  PackageID         Int
+  CountryCategoryID Int
+  IsActive          Boolean
+  CountryCategory   CountryCategory   @relation(fields: [CountryCategoryID], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+  Package           Package           @relation(fields: [PackageID], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+  PackageDuration   PackageDuration[]
+
+}
+
+model PackageDuration {
+  ID                            Int                         @id @unique @default(autoincrement())
+  Duration                      Int
+  CountryCategoryPackagePriceID Int
+  CountryCategoryPackagePrice   CountryCategoryPackagePrice @relation(fields: [CountryCategoryPackagePriceID], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model Feature {
+  ID                Int                 @id @unique @default(autoincrement())
+  Name              String              @db.VarChar(50)
+  Description       String              @db.VarChar(500)
+  PackageFeature    PackageFeature[]
+  PayAsYouGoPackage PayAsYouGoPackage[]
+
+}
+
+model PackageFeature {
+  ID        Int     @id @unique @default(autoincrement())
+  PackageID Int
+  FeatureID Int
+  IsActive  Boolean
+  Package   Package @relation(fields: [PackageID], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+  Feature   Feature @relation(fields: [FeatureID], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+
+}
+
+model CountryCategory {
+  ID                          Int                           @id @unique @default(autoincrement())
+  Category                    String                        @db.VarChar(50)
+  Description                 String                        @db.VarChar(500)
+  Country                     Country[]
+  CountryCategoryPackagePrice CountryCategoryPackagePrice[]
+  PayAsYouGoPackage           PayAsYouGoPackage[]
+}
+
+model PayAsYouGoPackage {
+  ID                Int             @id @unique @default(autoincrement())
+  Name              String          @db.VarChar(50)
+  Price             String          @db.VarChar(50)
+  FeatureID         Int
+  CountryCategoryID Int
+  IsActive          Boolean
+  Feature           Feature         @relation(fields: [FeatureID], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+  CountryCategory   CountryCategory @relation(fields: [CountryCategoryID], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model PasswordReset {
+  ID             Int      @id @unique @default(autoincrement())
+  UserID         Int
+  PasswordToken  String   @db.VarChar(500)
+  Otp            Int
+  IssueDateTime  DateTime @db.Timestamp()
+  IsValid        Boolean
+  ExpiryDateTime DateTime @db.Timestamp()
+  User           User     @relation(fields: [UserID], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model LinkedAccount {
+  ID                   Int                @id @unique @default(autoincrement())
+  UserID               Int
+  AuthenticationTypeID Int
+  AccessToken          String             @db.VarChar(1000)
+  TokenSecret          String             @db.VarChar(1000)
+  ProfileID            String             @db.VarChar(100)
+  User                 User               @relation(fields: [UserID], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+  AuthenticationType   AuthenticationType @relation(fields: [AuthenticationTypeID], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+}
+model UserProfileContact {
+  ID                   Int                @id @unique @default(autoincrement())
+  UserID               Int
+  BirthMonth           String             @db.VarChar(50)
+  BirthDay             Int       
+  Address              String             @db.VarChar(100)
+  Nationality          String             @db.VarChar(50)
+  CountryID            Int                 
+  City                 String             @db.VarChar(50)
+  PostCode             String             @db.VarChar(50)
+  Website              String             @db.VarChar(50)
+  UserProfilePhotoUrl  String             @db.VarChar(500)
+  UserProfileBackgroundUrl String         @db.VarChar(500)
+  Country              Country            @relation(fields: [CountryID], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+  User                 User               @relation(fields: [UserID], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+
+}
+model UserPost {
+  ID                   Int                @id @unique @default(autoincrement())
+  UserID               Int
+  PostDateTime         DateTime           @db.Timestamp()
+  PostText             String             @db.VarChar(500)
+  PostFileUrl          String             @db.VarChar(100)
+  PostContentType      String             @db.VarChar(50)
+  TotalLikes           Int?                
+  TotalShares          Int?
+  TotalComments        Int?
+  PromotionID          Int
+  UserPageID           Int?
+  PostAvailability     String             @db.VarChar(50)
+  IsActive             Boolean
+  User                 User               @relation(fields: [UserID], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+  PostReactions        PostReactions[]
+  PostComments         PostComments[]
+  PostToBeHiddenFrom   PostToBeHiddenFrom[]
+  PostReported         PostReported[]
+  CommentReported      CommentReported[]
+}
+model PostReactions {
+  ID                   Int                @id @unique @default(autoincrement())
+  PostID               Int
+  ReactionTypeID       Int            
+  UserID               Int
+  ReactionDateTime     DateTime           @db.Timestamp()
+  User                 User               @relation(fields: [UserID], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+  UserPost             UserPost           @relation(fields: [PostID], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+} 
+model PostComments {
+  ID                   Int                @id @unique @default(autoincrement())
+  PostID               Int
+  ParentCommentID      Int
+  UserID               Int
+  CommentDateTime      DateTime           @db.Timestamp()
+  CommentText          String             @db.VarChar(100)
+  CommentFileUrl       String             @db.VarChar(100)
+  CommentType          String             @db.VarChar(50)
+  TotalLikes           Int
+  IsActive             Boolean
+  User                 User               @relation(fields: [UserID], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+  UserPost             UserPost           @relation(fields: [PostID], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+  CommentReactions     CommentReactions[]
+}
+model CommentReactions {
+  ID                   Int                @id @unique @default(autoincrement())
+  CommentID            Int
+  ReactionTypeID       Int            
+  UserID               Int
+  ReactionDateTime     DateTime           @db.Timestamp()
+  User                 User               @relation(fields: [UserID], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+  PostComments         PostComments       @relation(fields: [CommentID], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+}
+model PostToBeHiddenFrom {
+  ID                   Int                @id @unique @default(autoincrement())
+  PostID               Int
+  BlockUserID          Int
+  ActionDate           DateTime           @db.Timestamp()
+  User                 User               @relation(fields: [BlockUserID], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+  UserPost             UserPost           @relation(fields: [PostID], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+  
+}
+model PostReported {
+  ID                   Int                @id @unique @default(autoincrement())
+  PostID               Int
+  ReportedBy           Int
+  ReportedDate         DateTime           @db.Timestamp()
+  Comments             String             @db.VarChar(100)
+  ActionTakenBy        Int
+  ActionTaken          String             @db.VarChar(50)
+  IsResolved           Boolean           
+  ActionCompletedOn    DateTime           @db.Timestamp()
+  CreatedOn            DateTime           @db.Timestamp()
+  User                 User               @relation(fields: [ReportedBy], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+  UserPost             UserPost           @relation(fields: [PostID], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+}
+model CommentReported {
+  ID                   Int                @id @unique @default(autoincrement())
+  CommentID            Int
+  ReportedBy           Int
+  ReportedDate         DateTime           @db.Timestamp()
+  Comments             String             @db.VarChar(100)
+  ActionTakenBy        Int
+  ActionTaken          String             @db.VarChar(50)
+  IsResolved           Boolean           
+  ActionCompletedOn    DateTime           @db.Timestamp()
+  CreatedOn            DateTime           @db.Timestamp()
+  User                 User               @relation(fields: [ReportedBy], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+  UserPost             UserPost           @relation(fields: [CommentID], references: [ID], onDelete: NoAction, onUpdate: NoAction)
+}
+model ReactionType {
+  ID                   Int                @id @unique @default(autoincrement())
+  Type                 String             @db.VarChar(50)                
+} 
+enum DeviceType {
+  Mobile
+  TAB
+  DESKTOP
+}
